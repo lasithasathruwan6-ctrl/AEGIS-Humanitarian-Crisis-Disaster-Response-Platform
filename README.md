@@ -27,7 +27,7 @@ A multi-organisation platform for coordinating emergency assistance, shelters, v
 |---|---|---|---|
 | 1 | Lasitha Sathruwan | @lasithasathruwan6-ctrl | Architecture, Security, Auth, Admin |
 | 2 | Hasindu Indusara| @hasindu-indusara | Database, Requests, Human-in-the-loop |
-| 3 | Sasmitha Thejan| |@bandara331| AI services, Resources |
+| 3 | Sasmitha Thejan| @bandara331| AI services, Resources |
 | 4 | Dimalsha Dewmini| @dimalsha-dewmini| Notifications, Mapping, Async |
 | 5 | Prageeth Ekanayake| @Madhusha-Prageeth| Shelters, Volunteers |
 | 6 | Rasindu Gimhana|@gimhanarasidu38-create | Citizens, Donations, QA |
