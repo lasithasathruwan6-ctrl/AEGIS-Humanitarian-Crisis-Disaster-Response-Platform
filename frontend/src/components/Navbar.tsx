@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { IconButton } from "@/components/IconButton";
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -30,7 +31,11 @@ export function Navbar() {
           Crisis Aid Platform
         </Link>
 
-        <nav style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}>
+        <nav
+          id="primary-navigation"
+          aria-label="Primary navigation"
+          style={{ display: "flex", alignItems: "center", gap: "var(--space-4)" }}
+        >
           <Link href="/shelters">Shelters</Link>
           <Link href="/citizen">Citizen</Link>
           <Link href="/staff">Staff</Link>
@@ -38,13 +43,13 @@ export function Navbar() {
           <Link href="/login" className="btn btn-secondary">
             Sign in
           </Link>
-          <button
-            type="button"
-            className="btn btn-secondary btn-icon"
+          <IconButton
+            label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={menuOpen}
+            aria-controls="primary-navigation"
+            icon={menuOpen ? "✕" : "☰"}
             onClick={() => setMenuOpen((prev) => !prev)}
-          >
-            {menuOpen ? "✕" : "☰"}
-          </button>
+          />
         </nav>
       </div>
     </header>
