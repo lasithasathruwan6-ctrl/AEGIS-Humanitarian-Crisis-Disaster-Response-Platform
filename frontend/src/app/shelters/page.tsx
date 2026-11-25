@@ -2,16 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
+import { ShelterMap, type MapShelterPoint } from "@/components/ShelterMap";
 import { StatusState } from "@/components/StatusState";
 import { apiFetch } from "@/lib/api";
 
-interface ShelterItem {
-  id: string;
-  name: string;
-  district: string;
-  capacity: number;
-  occupied: number;
-}
+type ShelterItem = MapShelterPoint;
 
 export default function SheltersPage() {
   const [shelters, setShelters] = useState<ShelterItem[]>([]);
@@ -52,6 +47,9 @@ export default function SheltersPage() {
           title="No shelters available"
           message="No active shelters are listed right now."
         />
+      )}
+      {!loading && !error && shelters.length > 0 && (
+        <ShelterMap shelters={shelters} />
       )}
       <div className="grid-cards">
         {shelters.map((s) => (
