@@ -487,3 +487,19 @@ build/
  
 .env 
 appsettings.Development.json 
+
+# --- Secrets hygiene (see docs/security/secrets.md) ---
+.env.*
+!.env.example
+appsettings.*.json
+!appsettings.json
+secrets.json
+*.secrets.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.crt
+id_rsa*
+.aspnet/
