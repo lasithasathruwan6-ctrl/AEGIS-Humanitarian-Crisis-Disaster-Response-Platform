@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { RoleGuard } from "@/components/RoleGuard";
 import { StatusState } from "@/components/StatusState";
+import { useI18n } from "@/i18n/I18nProvider";
 import { apiFetch } from "@/lib/api";
 
 interface AidRequestSummary {
@@ -15,6 +16,7 @@ interface AidRequestSummary {
 }
 
 export default function CitizenDashboardPage() {
+  const { t } = useI18n();
   const [requests, setRequests] = useState<AidRequestSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,10 +27,10 @@ export default function CitizenDashboardPage() {
     return apiFetch<AidRequestSummary[]>("/requests")
       .then((data) => setRequests(data))
       .catch((err) =>
-        setError(err instanceof Error ? err.message : "Unable to load requests")
+        setError(err instanceof Error ? err.message : t("errorLoadingRequestsTitle"))
       )
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     void loadRequests();
@@ -38,27 +40,27 @@ export default function CitizenDashboardPage() {
     <RoleGuard allowedRoles={["Citizen"]}>
       <div className="container">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-4)" }}>
-          <h1>Citizen Portal</h1>
+          <h1>{t("citizenPortalTitle")}</h1>
           <Link href="/citizen/requests/new" className="btn btn-primary">
-            New Request
+            {t("newRequestButton")}
           </Link>
         </div>
 
-        {loading && <LoadingSkeleton variant="cards" count={3} label="Loading your requests" />}
+        {loading && <LoadingSkeleton variant="cards" count={3} label={t("loadingRequests")} />}
         {error && (
           <StatusState
             variant="error"
-            title="Unable to load requests"
+            title={t("errorLoadingRequestsTitle")}
             message={error}
-            actionLabel="Retry"
+            actionLabel={t("retryButton")}
             onAction={() => void loadRequests()}
           />
         )}
         {!loading && !error && requests.length === 0 && (
           <StatusState
             variant="empty"
-            title="No requests yet"
-            message="You have not submitted any assistance requests yet."
+            title={t("emptyRequestsTitle")}
+            message={t("emptyRequestsMessage")}
           />
         )}
         <div className="grid-cards">

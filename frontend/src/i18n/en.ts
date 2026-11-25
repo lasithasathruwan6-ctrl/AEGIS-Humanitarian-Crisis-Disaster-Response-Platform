@@ -1,0 +1,31 @@
+export const en = {
+  appTitle: "Crisis Aid Platform",
+  navShelters: "Shelters",
+  navCitizen: "Citizen",
+  navStaff: "Staff",
+  navAdmin: "Admin",
+  navSignIn: "Sign in",
+  languageLabel: "Language",
+  citizenPortalTitle: "Citizen Portal",
+  newRequestButton: "New Request",
+  loadingRequests: "Loading your requests",
+  errorLoadingRequestsTitle: "Unable to load requests",
+  emptyRequestsTitle: "No requests yet",
+  emptyRequestsMessage: "You have not submitted any assistance requests yet.",
+  retryButton: "Retry",
+  newRequestTitle: "New Assistance Request",
+  fieldTitle: "Title",
+  fieldDistrict: "District",
+  fieldUrgency: "Urgency",
+  fieldDetails: "Details",
+  urgencyLow: "Low",
+  urgencyMedium: "Medium",
+  urgencyHigh: "High",
+  urgencyCritical: "Critical",
+  submitRequest: "Submit Request",
+  submittingRequest: "Submitting…",
+  submitRequestFailed: "Failed to submit request",
+} as const;
+
+export type TranslationKey = keyof typeof en;
+export type Dictionary = Record<TranslationKey, string>;
