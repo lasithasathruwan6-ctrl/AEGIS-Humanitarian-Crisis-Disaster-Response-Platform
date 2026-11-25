@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddFrontendCors(builder.Configuration);
+builder.Services.AddAuthRateLimiting(builder.Configuration);
 
 var app = builder.Build();
 
@@ -18,6 +19,7 @@ if (app.Environment.IsDevelopment())
 app.UseSecurityHeaders();
 app.UseHttpsRedirection();
 app.UseCors(CorsExtensions.PolicyName);
+app.UseRateLimiter();
 
 var summaries = new[]
 {
