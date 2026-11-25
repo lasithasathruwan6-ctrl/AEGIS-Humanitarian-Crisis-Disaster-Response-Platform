@@ -52,7 +52,12 @@ dotnet run --project backend/CrisisPlatform.Api
 Swagger UI: https://localhost:<port>/swagger *(update when ready)*
 
 ## Configuration
-Secrets are never committed. Use `dotnet user-secrets` or `appsettings.Development.json` (git-ignored).
+Secrets are never committed. Use `dotnet user-secrets` or `appsettings.Development.json` (git-ignored). See [.env.example](.env.example) and [docs/security/secrets.md](docs/security/secrets.md).
+
+## Security
+- **Threat Model & Matrix:** [docs/security/threat-model.md](docs/security/threat-model.md) and [docs/security/role-endpoint-matrix.md](docs/security/role-endpoint-matrix.md)
+- **Controls Implemented:** Security headers, strict single-origin CORS, auth rate limiting, password policy, hashed OTP with cooldown, short-lived JWTs + rotating/revokable refresh tokens, account lockout, AES-256-GCM NIC encryption + masking + keyed uniqueness hash, deny-by-default role policies + ownership scoping, single-use 24h staff invitations, two-person role change approval, log redaction, and upload signature validation.
+- **Verification & Audits:** [docs/security/security-testing-report.md](docs/security/security-testing-report.md) (271 passing tests) and [docs/security/dependency-audit.md](docs/security/dependency-audit.md).
 
 ## Test Credentials
 *(dummy accounts per role to be added)*
