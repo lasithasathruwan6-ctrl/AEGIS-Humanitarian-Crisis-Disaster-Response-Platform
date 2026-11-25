@@ -18,6 +18,32 @@ body {
   line-height: 1.5;
 }
 
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: var(--space-2);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  z-index: var(--z-modal);
+}
+
+.skip-link:focus {
+  left: var(--space-4);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--color-info);
+  outline-offset: 2px;
+}
+
 a {
   color: var(--color-primary);
   text-decoration: none;
