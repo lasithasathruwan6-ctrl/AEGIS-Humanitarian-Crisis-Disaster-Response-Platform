@@ -10,7 +10,7 @@ A multi-organisation platform for coordinating emergency assistance, shelters, v
 |---|---|
 | Backend | ASP.NET Core Web API (C#, .NET 10) |
 | Database | SQL Server |
-| Frontend | React / Angular / Vue (TBD) |
+| Frontend | Next.js 15 (App Router, React 19, TypeScript) |
 | API Docs | Swagger / OpenAPI |
 | Architecture | Modular Monolith |
 
@@ -50,6 +50,15 @@ git checkout -b feature/m<number>-<topic>
 dotnet run --project backend/CrisisPlatform.Api
 ```
 Swagger UI: https://localhost:<port>/swagger *(update when ready)*
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+- **Checks & Tests:** `npm run check` (ESLint + `tsc --noEmit`), `npm test` (Vitest + Testing Library), `npm run build`
+- **Documentation:** [docs/frontend/structure.md](docs/frontend/structure.md) (areas, routes, role guards) and [docs/frontend/ui-guide.md](docs/frontend/ui-guide.md) (design tokens, accessibility, i18n, responsive & async patterns)
 
 ## Configuration
 Secrets are never committed. Use `dotnet user-secrets` or `appsettings.Development.json` (git-ignored). See [.env.example](.env.example) and [docs/security/secrets.md](docs/security/secrets.md).
