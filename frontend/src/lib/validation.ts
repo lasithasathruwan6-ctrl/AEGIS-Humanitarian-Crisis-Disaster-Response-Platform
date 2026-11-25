@@ -52,3 +52,27 @@ export function validateRegistrationFields(input: {
 
   return errors;
 }
+
+export const ALLOWED_EVIDENCE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+] as const;
+
+export const MAX_EVIDENCE_SIZE_BYTES = 5 * 1024 * 1024;
+
+export function validateEvidenceFile(
+  file: Pick<File, "name" | "type" | "size">
+): string | null {
+  if (!ALLOWED_EVIDENCE_TYPES.includes(file.type as (typeof ALLOWED_EVIDENCE_TYPES)[number])) {
+    return `Unsupported file type for "${file.name}". Upload JPEG, PNG, WebP, or PDF.`;
+  }
+  if (file.size <= 0) {
+    return `File "${file.name}" is empty.`;
+  }
+  if (file.size > MAX_EVIDENCE_SIZE_BYTES) {
+    return `File "${file.name}" exceeds the 5 MB limit.`;
+  }
+  return null;
+}
