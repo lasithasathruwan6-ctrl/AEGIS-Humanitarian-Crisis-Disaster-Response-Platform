@@ -1,12 +1,23 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
-import { RequestChat, type ChatMessage } from "@/components/RequestChat";
+import type { ChatMessage } from "@/components/RequestChat";
 import { RoleGuard } from "@/components/RoleGuard";
 import { StatusState } from "@/components/StatusState";
 import { apiFetch } from "@/lib/api";
+
+const LazyRequestChat = dynamic(
+  () => import("@/components/RequestChat").then((mod) => mod.RequestChat),
+  {
+    ssr: false,
+    loading: () => (
+      <LoadingSkeleton variant="cards" count={1} label="Loading chat module" />
+    ),
+  }
+);
 
 export default function CitizenRequestDetailPage() {
   const params = useParams<{ id: string }>();
@@ -42,7 +53,7 @@ export default function CitizenRequestDetailPage() {
           <StatusState variant="error" title="Unable to load messages" message={error} />
         )}
         {!loading && !error && (
-          <RequestChat requestId={requestId} initialMessages={messages} />
+          <LazyRequestChat requestId={requestId} initialMessages={messages} />
         )}
       </div>
     </RoleGuard>

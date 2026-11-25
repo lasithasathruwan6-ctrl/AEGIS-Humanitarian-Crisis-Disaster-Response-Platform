@@ -1,10 +1,21 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
-import { ShelterMap, type MapShelterPoint } from "@/components/ShelterMap";
+import type { MapShelterPoint } from "@/components/ShelterMap";
 import { StatusState } from "@/components/StatusState";
 import { apiFetch } from "@/lib/api";
+
+const LazyShelterMap = dynamic(
+  () => import("@/components/ShelterMap").then((mod) => mod.ShelterMap),
+  {
+    ssr: false,
+    loading: () => (
+      <LoadingSkeleton variant="cards" count={1} label="Loading shelter map" />
+    ),
+  }
+);
 
 type ShelterItem = MapShelterPoint;
 
@@ -49,7 +60,7 @@ export default function SheltersPage() {
         />
       )}
       {!loading && !error && shelters.length > 0 && (
-        <ShelterMap shelters={shelters} />
+        <LazyShelterMap shelters={shelters} />
       )}
       <div className="grid-cards">
         {shelters.map((s) => (
