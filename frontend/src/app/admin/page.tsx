@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { RoleGuard } from "@/components/RoleGuard";
 import { apiFetch } from "@/lib/api";
 
@@ -37,7 +38,7 @@ export default function AdminDashboardPage() {
     <RoleGuard allowedRoles={["Admin"]}>
       <div className="container">
         <h1>Admin Console</h1>
-        {loading && <p className="muted">Loading audit log…</p>}
+        {loading && <LoadingSkeleton variant="table" count={4} label="Loading audit log" />}
         {error && <p role="alert" style={{ color: "var(--color-danger)" }}>{error}</p>}
         {!loading && !error && entries.length === 0 && (
           <p className="muted">No audit log entries recorded.</p>

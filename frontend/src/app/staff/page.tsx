@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { RoleGuard } from "@/components/RoleGuard";
 import { apiFetch } from "@/lib/api";
 
@@ -38,7 +39,7 @@ export default function StaffDashboardPage() {
     <RoleGuard allowedRoles={["Staff", "Coordinator", "Admin"]}>
       <div className="container">
         <h1>Staff Triage Queue</h1>
-        {loading && <p className="muted">Loading queue…</p>}
+        {loading && <LoadingSkeleton variant="table" count={4} label="Loading triage queue" />}
         {error && <p role="alert" style={{ color: "var(--color-danger)" }}>{error}</p>}
         {!loading && !error && rows.length === 0 && (
           <p className="muted">No requests in the queue.</p>

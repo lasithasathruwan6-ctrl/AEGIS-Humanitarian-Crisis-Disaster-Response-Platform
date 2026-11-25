@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { RoleGuard } from "@/components/RoleGuard";
 import { apiFetch } from "@/lib/api";
 
@@ -44,7 +45,7 @@ export default function CitizenDashboardPage() {
           </Link>
         </div>
 
-        {loading && <p className="muted">Loading your requests…</p>}
+        {loading && <LoadingSkeleton variant="cards" count={3} label="Loading your requests" />}
         {error && <p role="alert" style={{ color: "var(--color-danger)" }}>{error}</p>}
         {!loading && !error && requests.length === 0 && (
           <p className="muted">You have not submitted any assistance requests yet.</p>

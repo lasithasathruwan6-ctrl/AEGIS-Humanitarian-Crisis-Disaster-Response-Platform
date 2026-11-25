@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { apiFetch } from "@/lib/api";
 
 interface ShelterItem {
@@ -36,7 +37,7 @@ export default function SheltersPage() {
   return (
     <div className="container">
       <h1>Shelters</h1>
-      {loading && <p className="muted">Loading shelters…</p>}
+      {loading && <LoadingSkeleton variant="cards" count={3} label="Loading shelters" />}
       {error && <p role="alert" style={{ color: "var(--color-danger)" }}>{error}</p>}
       {!loading && !error && shelters.length === 0 && (
         <p className="muted">No shelters available right now.</p>
