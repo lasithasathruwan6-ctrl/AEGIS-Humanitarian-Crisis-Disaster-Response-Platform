@@ -41,27 +41,31 @@ export default function NewRequestPage() {
               <label htmlFor="req-title">Title</label>
               <input id="req-title" className="form-input" required value={title} onChange={(e) => setTitle(e.target.value)} />
             </div>
-            <div className="form-field">
-              <label htmlFor="req-district">District</label>
-              <input id="req-district" className="form-input" required value={district} onChange={(e) => setDistrict(e.target.value)} />
-            </div>
-            <div className="form-field">
-              <label htmlFor="req-urgency">Urgency</label>
-              <select id="req-urgency" className="form-input" value={urgency} onChange={(e) => setUrgency(e.target.value)}>
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-                <option value="Critical">Critical</option>
-              </select>
+            <div className="form-grid">
+              <div className="form-field">
+                <label htmlFor="req-district">District</label>
+                <input id="req-district" className="form-input" required value={district} onChange={(e) => setDistrict(e.target.value)} />
+              </div>
+              <div className="form-field">
+                <label htmlFor="req-urgency">Urgency</label>
+                <select id="req-urgency" className="form-input" value={urgency} onChange={(e) => setUrgency(e.target.value)}>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Critical">Critical</option>
+                </select>
+              </div>
             </div>
             <div className="form-field">
               <label htmlFor="req-desc">Details</label>
               <textarea id="req-desc" className="form-input" rows={4} required value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
             {error && <p role="alert" style={{ color: "var(--color-danger)" }}>{error}</p>}
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? "Submitting…" : "Submit Request"}
-            </button>
+            <div className="form-actions">
+              <button type="submit" className="btn btn-primary" disabled={submitting}>
+                {submitting ? "Submitting…" : "Submit Request"}
+              </button>
+            </div>
           </form>
         </div>
       </div>
