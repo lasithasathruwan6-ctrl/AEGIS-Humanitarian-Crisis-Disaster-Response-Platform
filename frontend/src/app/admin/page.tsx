@@ -43,24 +43,26 @@ export default function AdminDashboardPage() {
           <p className="muted">No audit log entries recorded.</p>
         )}
         {entries.length > 0 && (
-          <table style={{ width: "100%", borderCollapse: "collapse", background: "var(--color-surface)" }}>
-            <thead>
-              <tr>
-                <th>Actor</th>
-                <th>Action</th>
-                <th>Timestamp</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => (
-                <tr key={entry.id}>
-                  <td>{entry.actor}</td>
-                  <td>{entry.action}</td>
-                  <td>{entry.timestamp}</td>
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Actor</th>
+                  <th>Action</th>
+                  <th>Timestamp</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {entries.map((entry) => (
+                  <tr key={entry.id}>
+                    <td data-label="Actor">{entry.actor}</td>
+                    <td data-label="Action">{entry.action}</td>
+                    <td data-label="Timestamp">{entry.timestamp}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </RoleGuard>

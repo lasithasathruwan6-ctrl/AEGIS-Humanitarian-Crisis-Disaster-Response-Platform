@@ -44,26 +44,28 @@ export default function StaffDashboardPage() {
           <p className="muted">No requests in the queue.</p>
         )}
         {rows.length > 0 && (
-          <table style={{ width: "100%", borderCollapse: "collapse", background: "var(--color-surface)" }}>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>District</th>
-                <th>Urgency</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id}>
-                  <td>{row.title}</td>
-                  <td>{row.district}</td>
-                  <td>{row.urgency}</td>
-                  <td>{row.status}</td>
+          <div className="table-responsive">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>District</th>
+                  <th>Urgency</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {rows.map((row) => (
+                  <tr key={row.id}>
+                    <td data-label="Title">{row.title}</td>
+                    <td data-label="District">{row.district}</td>
+                    <td data-label="Urgency">{row.urgency}</td>
+                    <td data-label="Status">{row.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </RoleGuard>
