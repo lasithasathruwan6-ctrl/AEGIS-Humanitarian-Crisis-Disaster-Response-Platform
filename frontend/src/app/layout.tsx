@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Navbar } from "@/components/Navbar";
+import { SessionExpiredModal } from "@/components/SessionExpiredModal";
 import { I18nProvider } from "@/i18n/I18nProvider";
 
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export default function RootLayout({
           <main id="main-content" tabIndex={-1}>
             {children}
           </main>
+          <SessionExpiredModal />
         </I18nProvider>
       </body>
     </html>
