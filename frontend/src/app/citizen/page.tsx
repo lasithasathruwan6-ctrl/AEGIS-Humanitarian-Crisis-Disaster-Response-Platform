@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { RoleGuard } from "@/components/RoleGuard";
+import { StatusState } from "@/components/StatusState";
 import { apiFetch } from "@/lib/api";
 
 interface AidRequestSummary {
@@ -18,22 +19,20 @@ export default function CitizenDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    apiFetch<AidRequestSummary[]>("/requests")
-      .then((data) => {
-        if (active) setRequests(data);
-      })
-      .catch((err) => {
-        if (active) setError(err instanceof Error ? err.message : "Unable to load requests");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+  const loadRequests = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    return apiFetch<AidRequestSummary[]>("/requests")
+      .then((data) => setRequests(data))
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Unable to load requests")
+      )
+      .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    void loadRequests();
+  }, [loadRequests]);
 
   return (
     <RoleGuard allowedRoles={["Citizen"]}>
@@ -46,9 +45,21 @@ export default function CitizenDashboardPage() {
         </div>
 
         {loading && <LoadingSkeleton variant="cards" count={3} label="Loading your requests" />}
-        {error && <p role="alert" style={{ color: "var(--color-danger)" }}>{error}</p>}
+        {error && (
+          <StatusState
+            variant="error"
+            title="Unable to load requests"
+            message={error}
+            actionLabel="Retry"
+            onAction={() => void loadRequests()}
+          />
+        )}
         {!loading && !error && requests.length === 0 && (
-          <p className="muted">You have not submitted any assistance requests yet.</p>
+          <StatusState
+            variant="empty"
+            title="No requests yet"
+            message="You have not submitted any assistance requests yet."
+          />
         )}
         <div className="grid-cards">
           {requests.map((req) => (

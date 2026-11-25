@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { RoleGuard } from "@/components/RoleGuard";
+import { StatusState } from "@/components/StatusState";
 import { apiFetch } from "@/lib/api";
 
 interface AuditEntry {
@@ -17,31 +18,41 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    apiFetch<AuditEntry[]>("/admin/audit-log")
-      .then((data) => {
-        if (active) setEntries(data);
-      })
-      .catch((err) => {
-        if (active) setError(err instanceof Error ? err.message : "Unable to load audit log");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+  const loadAuditLog = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    return apiFetch<AuditEntry[]>("/admin/audit-log")
+      .then((data) => setEntries(data))
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Unable to load audit log")
+      )
+      .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    void loadAuditLog();
+  }, [loadAuditLog]);
 
   return (
     <RoleGuard allowedRoles={["Admin"]}>
       <div className="container">
         <h1>Admin Console</h1>
         {loading && <LoadingSkeleton variant="table" count={4} label="Loading audit log" />}
-        {error && <p role="alert" style={{ color: "var(--color-danger)" }}>{error}</p>}
+        {error && (
+          <StatusState
+            variant="error"
+            title="Unable to load audit log"
+            message={error}
+            actionLabel="Retry"
+            onAction={() => void loadAuditLog()}
+          />
+        )}
         {!loading && !error && entries.length === 0 && (
-          <p className="muted">No audit log entries recorded.</p>
+          <StatusState
+            variant="empty"
+            title="No audit entries"
+            message="No audit log entries have been recorded yet."
+          />
         )}
         {entries.length > 0 && (
           <div className="table-responsive">

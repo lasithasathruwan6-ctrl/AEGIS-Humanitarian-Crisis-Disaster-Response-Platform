@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { RoleGuard } from "@/components/RoleGuard";
+import { StatusState } from "@/components/StatusState";
 import { apiFetch } from "@/lib/api";
 
 interface StaffRequestRow {
@@ -18,31 +19,41 @@ export default function StaffDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    apiFetch<StaffRequestRow[]>("/requests")
-      .then((data) => {
-        if (active) setRows(data);
-      })
-      .catch((err) => {
-        if (active) setError(err instanceof Error ? err.message : "Unable to load triage queue");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
+  const loadQueue = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    return apiFetch<StaffRequestRow[]>("/requests")
+      .then((data) => setRows(data))
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : "Unable to load triage queue")
+      )
+      .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    void loadQueue();
+  }, [loadQueue]);
 
   return (
     <RoleGuard allowedRoles={["Staff", "Coordinator", "Admin"]}>
       <div className="container">
         <h1>Staff Triage Queue</h1>
         {loading && <LoadingSkeleton variant="table" count={4} label="Loading triage queue" />}
-        {error && <p role="alert" style={{ color: "var(--color-danger)" }}>{error}</p>}
+        {error && (
+          <StatusState
+            variant="error"
+            title="Unable to load triage queue"
+            message={error}
+            actionLabel="Retry"
+            onAction={() => void loadQueue()}
+          />
+        )}
         {!loading && !error && rows.length === 0 && (
-          <p className="muted">No requests in the queue.</p>
+          <StatusState
+            variant="empty"
+            title="Queue is empty"
+            message="No requests are waiting in the triage queue."
+          />
         )}
         {rows.length > 0 && (
           <div className="table-responsive">
