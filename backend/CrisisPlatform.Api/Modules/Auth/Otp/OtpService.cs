@@ -10,6 +10,9 @@ public sealed class OtpOptions
     public int Length { get; set; } = 6;
     public int LifetimeMinutes { get; set; } = 10;
     public int MaxAttempts { get; set; } = 5;
+
+    /// <summary>Minimum time between two codes sent to the same address.</summary>
+    public int ResendCooldownSeconds { get; set; } = 60;
 }
 
 public sealed class OtpRecord
@@ -36,10 +39,12 @@ public interface IOtpStore
 public enum OtpIssueStatus
 {
     Issued,
+    Cooldown,
 }
 
 /// <param name="Code">The plain code to deliver by email; only set when <see cref="Status"/> is Issued.</param>
-public sealed record OtpIssueResult(OtpIssueStatus Status, string? Code);
+/// <param name="RetryAfter">How long the caller must wait; only set when <see cref="Status"/> is Cooldown.</param>
+public sealed record OtpIssueResult(OtpIssueStatus Status, string? Code, TimeSpan? RetryAfter = null);
 
 public enum OtpVerifyResult
 {
@@ -64,7 +69,7 @@ public sealed class OtpService
             throw new ArgumentException("OTP hash key must be at least 32 bytes.", nameof(hashKey));
         }
 
-        if (options.Length < 6 || options.LifetimeMinutes < 1 || options.MaxAttempts < 1)
+        if (options.Length < 6 || options.LifetimeMinutes < 1 || options.MaxAttempts < 1 || options.ResendCooldownSeconds < 0)
         {
             throw new ArgumentException("OTP options are out of range.", nameof(options));
         }
@@ -79,6 +84,16 @@ public sealed class OtpService
     {
         email = Normalise(email);
         var now = _clock.GetUtcNow();
+
+        var previous = await _store.GetAsync(email, cancellationToken);
+        if (previous is not null)
+        {
+            var retryAt = previous.CreatedAt.AddSeconds(_options.ResendCooldownSeconds);
+            if (now < retryAt)
+            {
+                return new OtpIssueResult(OtpIssueStatus.Cooldown, null, retryAt - now);
+            }
+        }
 
         var code = RandomNumberGenerator.GetInt32(0, (int)Math.Pow(10, _options.Length))
             .ToString().PadLeft(_options.Length, '0');

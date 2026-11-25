@@ -106,6 +106,7 @@ public class OtpServiceTests
     {
         var service = CreateService();
         var first = await service.IssueAsync(Email);
+        _clock.Advance(TimeSpan.FromSeconds(_options.ResendCooldownSeconds));
         var second = await service.IssueAsync(Email);
 
         if (first.Code != second.Code)
