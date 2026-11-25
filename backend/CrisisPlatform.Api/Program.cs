@@ -1,3 +1,5 @@
+using CrisisPlatform.Api.Common.Security;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -12,6 +14,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseSecurityHeaders();
 app.UseHttpsRedirection();
 
 var summaries = new[]
