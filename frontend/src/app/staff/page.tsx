@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { RoleGuard } from "@/components/RoleGuard";
 import { StatusState } from "@/components/StatusState";
+import { usePolling } from "@/hooks/usePolling";
 import { apiFetch } from "@/lib/api";
 
 interface StaffRequestRow {
@@ -15,24 +16,18 @@ interface StaffRequestRow {
 }
 
 export default function StaffDashboardPage() {
-  const [rows, setRows] = useState<StaffRequestRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const fetchQueue = useCallback(
+    (signal: AbortSignal) => apiFetch<StaffRequestRow[]>("/requests", { signal }),
+    []
+  );
 
-  const loadQueue = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    return apiFetch<StaffRequestRow[]>("/requests")
-      .then((data) => setRows(data))
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : "Unable to load triage queue")
-      )
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, loading, error, retry } = usePolling<StaffRequestRow[]>({
+    fetcher: fetchQueue,
+    baseIntervalMs: 10000,
+    maxIntervalMs: 60000,
+  });
 
-  useEffect(() => {
-    void loadQueue();
-  }, [loadQueue]);
+  const rows = data ?? [];
 
   return (
     <RoleGuard allowedRoles={["Staff", "Coordinator", "Admin"]}>
@@ -45,7 +40,7 @@ export default function StaffDashboardPage() {
             title="Unable to load triage queue"
             message={error}
             actionLabel="Retry"
-            onAction={() => void loadQueue()}
+            onAction={retry}
           />
         )}
         {!loading && !error && rows.length === 0 && (
