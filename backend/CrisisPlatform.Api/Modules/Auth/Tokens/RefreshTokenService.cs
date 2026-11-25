@@ -83,6 +83,20 @@ public sealed class RefreshTokenService(IRefreshTokenStore store, TimeProvider c
         return new RefreshResult(RefreshStatus.Rotated, record.UserId, next);
     }
 
+    /// <summary>Ends the session the token belongs to; every token in its family stops working.</summary>
+    /// <returns>False when the token is unknown, so callers can answer identically either way.</returns>
+    public async Task<bool> LogoutAsync(string token, CancellationToken cancellationToken = default)
+    {
+        var record = await store.FindByHashAsync(Hash(token), cancellationToken);
+        if (record is null)
+        {
+            return false;
+        }
+
+        await store.RevokeFamilyAsync(record.FamilyId, clock.GetUtcNow(), cancellationToken);
+        return true;
+    }
+
     private async Task<string> CreateAsync(string userId, string familyId, CancellationToken cancellationToken)
     {
         var token = WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
