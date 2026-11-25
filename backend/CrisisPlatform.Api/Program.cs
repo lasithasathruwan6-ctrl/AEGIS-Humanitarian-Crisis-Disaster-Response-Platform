@@ -1,6 +1,8 @@
 using CrisisPlatform.Api.Common.Security;
+using CrisisPlatform.Api.Common.Security.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.AddRedaction();
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
