@@ -1,3 +1,4 @@
+using CrisisPlatform.Api.Common.Errors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CrisisPlatform.Api.Modules.Requests;
@@ -32,6 +33,10 @@ public sealed class RequestsController(RequestService service) : ControllerBase
         {
             var result = service.Create(dto, idempotencyKey);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+        }
+        catch (IdempotencyConflictException ex)
+        {
+            return Conflict(new ProblemDetails { Title = "Idempotency conflict", Detail = ex.Message, Status = StatusCodes.Status409Conflict });
         }
         catch (ArgumentOutOfRangeException ex)
         {

@@ -1,3 +1,5 @@
+using CrisisPlatform.Api.Common.Errors;
+
 namespace CrisisPlatform.Api.Modules.Requests;
 
 // ---------------------------------------------------------------------------
@@ -23,8 +25,10 @@ public sealed class AidRequest
 /// </summary>
 public sealed class RequestService(TimeProvider clock)
 {
-    // Simulated in-memory store (replaced by IRepository&lt;AidRequest&gt; in production).
+    // Simulated in-memory store (replaced by IRepository<AidRequest> in production).
     private readonly List<AidRequest> _store = [];
+    private readonly Dictionary<string, (string Fingerprint, RequestDto Response)> _idempotencyCache =
+        new(StringComparer.Ordinal);
 
     // -----------------------------------------------------------------------
     // Business rules
@@ -37,12 +41,14 @@ public sealed class RequestService(TimeProvider clock)
         };
 
     /// <summary>
-    /// Creates a new aid request after applying domain validation rules.
-    /// Returns the persisted DTO on success, or throws <see cref="InvalidOperationException"/>
-    /// when a business rule is violated.
+    /// Creates a new aid request after applying domain validation rules and
+    /// enforcing <c>Idempotency-Key</c> semantics.
     /// </summary>
     public RequestDto Create(CreateRequestDto dto, string idempotencyKey)
     {
+        if (string.IsNullOrWhiteSpace(idempotencyKey))
+            throw new ArgumentException("Idempotency-Key must not be empty.", nameof(idempotencyKey));
+
         // Business rule 1 – urgency must be in range.
         if (dto.Urgency is < 1 or > 5)
             throw new ArgumentOutOfRangeException(nameof(dto.Urgency), "Urgency must be 1–5.");
@@ -51,12 +57,18 @@ public sealed class RequestService(TimeProvider clock)
         if (!ValidNeedTypes.Contains(dto.NeedType))
             throw new ArgumentException($"Unknown NeedType '{dto.NeedType}'.", nameof(dto.NeedType));
 
-        // Business rule 3 – idempotency: same key → return the existing request.
-        var existing = _store.FirstOrDefault(r => r.NicHash == dto.NicHash
-                                                   && r.NeedType == dto.NeedType
-                                                   && r.Status == "Pending");
-        if (existing is not null)
-            return MapToDto(existing);
+        var fingerprint = $"{dto.NicHash}|{dto.District}|{dto.NeedType}|{dto.Urgency}|{dto.Description}|{dto.ContactPhone}";
+
+        // Business rule 3 – idempotency: same key + same payload → return cached response;
+        // same key + different payload → 409 Conflict.
+        if (_idempotencyCache.TryGetValue(idempotencyKey, out var cached))
+        {
+            if (!string.Equals(cached.Fingerprint, fingerprint, StringComparison.Ordinal))
+                throw new IdempotencyConflictException(
+                    $"Idempotency-Key '{idempotencyKey}' was already used with a different request payload.");
+
+            return cached.Response;
+        }
 
         var entity = new AidRequest
         {
@@ -70,7 +82,9 @@ public sealed class RequestService(TimeProvider clock)
         };
 
         _store.Add(entity);
-        return MapToDto(entity);
+        var response = MapToDto(entity);
+        _idempotencyCache[idempotencyKey] = (fingerprint, response);
+        return response;
     }
 
     /// <summary>Returns all requests, optionally filtered by district.</summary>
