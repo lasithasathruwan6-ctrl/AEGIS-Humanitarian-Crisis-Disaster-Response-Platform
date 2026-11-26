@@ -1,0 +1,66 @@
+name: Backend — Build and Test
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend.yml"
+
+jobs:
+  build-and-test:
+    name: Build and test (.NET 10)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore CrisisPlatform.Api/CrisisPlatform.Api.csproj
+
+      - name: Restore test dependencies
+        run: dotnet restore CrisisPlatform.Tests/CrisisPlatform.Tests.csproj
+
+      - name: Build API
+        run: dotnet build CrisisPlatform.Api/CrisisPlatform.Api.csproj --no-restore --configuration Release
+
+      - name: Build Tests
+        run: dotnet build CrisisPlatform.Tests/CrisisPlatform.Tests.csproj --no-restore --configuration Release
+
+      - name: Run unit and integration tests
+        run: >
+          dotnet test CrisisPlatform.Tests/CrisisPlatform.Tests.csproj
+          --no-build
+          --configuration Release
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory TestResults
+        env:
+          # Provide minimal secrets required by the security tests.
+          # Real values are never stored here; tests use short fixed strings.
+          Auth__Tokens__SigningKey: "ci-test-signing-key-0123456789-abcdef"
+          Security__NicEncryptionKey: "Y2ktbmljLWVuY3J5cHRpb24ta2V5LTMyYnl0ZXMA"
+          Security__NicHashKey: "Y2ktbmljLWhhc2gta2V5LTMyLWJ5dGVzLWhlcmUA"
+          Security__OtpHashKey: "Y2ktb3RwLWhhc2gta2V5LTMyLWJ5dGVzLWhlcmUA"
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend/TestResults/*.trx
+          retention-days: 14
