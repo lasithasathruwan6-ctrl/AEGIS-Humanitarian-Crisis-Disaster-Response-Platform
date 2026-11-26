@@ -1,83 +1,170 @@
-# Crisis Aid Platfo
+# Crisis Aid Platform
 
-**SE205.3 Software Architecture Coursework 2026**
+**SE205.3 Software Architecture Coursework 2026**  
 AI-Powered Humanitarian Crisis Management and Aid Coordination Platform
 
 A multi-organisation platform for coordinating emergency assistance, shelters, volunteers, resources, donations and AI-assisted (human-approved) decision-making during disasters.
 
+---
+
 ## Tech Stack
+
 | Layer | Technology |
-|---|---|
-| Backend | ASP.NET Core Web API (C#, .NET 10) |
-| Database | SQL Server |
+|-------|-----------|
+| Backend | ASP.NET Core 10 Web API (C#, .NET 10) |
+| Database | SQL Server 2022 |
 | Frontend | Next.js 15 (App Router, React 19, TypeScript) |
-| API Docs | Swagger / OpenAPI |
+| API Docs | OpenAPI / Swagger |
 | Architecture | Modular Monolith |
+| Containerisation | Docker + Docker Compose |
+| CI | GitHub Actions |
 
-## Repository Structure
-```
-/backend    ASP.NET Core solution
-/frontend   Web client
-/database   SQL scripts (schema, seed data)
-/docs       Report, diagrams, Postman collection
-```
+---
 
-## Team
-| Member | Name | GitHub | Area |
-|---|---|---|---|
-| 1 | Lasitha Sathruwan | @lasithasathruwan6-ctrl | Architecture, Security, Auth, Admin |
-| 2 | Hasindu Indusara| @hasindu-indusara | Database, Requests, Human-in-the-loop |
-| 3 | Sasmitha Thejan| @bandara331| AI services, Resources |
-| 4 | Dimalsha Dewmini| @dimalsha-dewmini| Notifications, Mapping, Async |
-| 5 | Prageeth Ekanayake| @Madhusha-Prageeth| Shelters, Volunteers |
-| 6 | Rasindu Gimhana|@gimhanarasidu38-create | Citizens, Donations, QA |
+## Quick Start
 
-## Prerequisites
-- .NET 10 SDK
-- SQL Server (+ SSMS)
-- Node.js (LTS)
+### Prerequisites
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- [Node.js 20 LTS](https://nodejs.org)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for the compose workflow)
 - Git
 
-## Getting Started
+### Option A — Docker Compose (recommended)
+
 ```bash
 git clone https://github.com/lasithasathruwan6-ctrl/crisis-aid-platform.git
 cd crisis-aid-platform
-git checkout -b feature/m<number>-<topic>
+
+# Copy the example env file and fill in secrets (see docs/env-reference.md)
+cp .env.example .env
+
+# Start API + SQL Server together
+docker compose up --build
 ```
 
-### Backend
+| Service | URL |
+|---------|-----|
+| API | http://localhost:8080 |
+| Swagger | http://localhost:8080/openapi |
+
+### Option B — Run directly
+
+**Backend**
+
 ```bash
+# Set secrets with dotnet user-secrets
+dotnet user-secrets init --project backend/CrisisPlatform.Api
+dotnet user-secrets set "Auth:Tokens:SigningKey" "<48+ chars>" --project backend/CrisisPlatform.Api
+# ... set remaining secrets (see docs/env-reference.md)
+
 dotnet run --project backend/CrisisPlatform.Api
 ```
-Swagger UI: https://localhost:<port>/swagger *(update when ready)*
 
-### Frontend
+**Frontend**
+
 ```bash
 cd frontend
-npm install
-npm run dev
+npm ci
+npm run dev      # http://localhost:3000
 ```
-- **Checks & Tests:** `npm run check` (ESLint + `tsc --noEmit`), `npm test` (Vitest + Testing Library), `npm run build`
-- **Documentation:** [docs/frontend/structure.md](docs/frontend/structure.md) (areas, routes, role guards) and [docs/frontend/ui-guide.md](docs/frontend/ui-guide.md) (design tokens, accessibility, i18n, responsive & async patterns)
 
-## Configuration
-Secrets are never committed. Use `dotnet user-secrets` or `appsettings.Development.json` (git-ignored). See [.env.example](.env.example) and [docs/security/secrets.md](docs/security/secrets.md).
+---
+
+## Running Tests
+
+**Backend (xUnit)**
+
+```bash
+dotnet test backend/CrisisPlatform.Tests/CrisisPlatform.Tests.csproj
+```
+
+**Frontend (Vitest)**
+
+```bash
+cd frontend
+npm test
+```
+
+**API (Newman / Postman)**
+
+```bash
+# Install Newman
+npm install -g newman
+
+# Run the full collection against localhost:8080
+bash scripts/run-newman.sh
+```
+
+See [`docs/testing/newman-guide.md`](docs/testing/newman-guide.md) for detailed instructions.
+
+---
+
+## Documentation Index
+
+| Document | Description |
+|----------|-------------|
+| [`docs/deploy.md`](docs/deploy.md) | Full deployment guide (local, Docker, production, rollback) |
+| [`docs/env-reference.md`](docs/env-reference.md) | Every environment variable, its purpose and format |
+| [`docs/release-checklist.md`](docs/release-checklist.md) | Pre-release checklist (code, security, testing, deployment) |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Commit style, branch workflow, review process, folder ownership |
+| **Testing** | |
+| [`docs/testing/test-plan.md`](docs/testing/test-plan.md) | Test strategy, scope, environments and defect policy |
+| [`docs/testing/coverage-table.md`](docs/testing/coverage-table.md) | Feature × test-type coverage matrix |
+| [`docs/testing/newman-guide.md`](docs/testing/newman-guide.md) | How to run the Postman collection with Newman |
+| [`docs/testing/uat-form.md`](docs/testing/uat-form.md) | UAT test cases (40 cases across all roles) |
+| [`docs/testing/uat-results-template.md`](docs/testing/uat-results-template.md) | UAT results recording template |
+| **Security** | |
+| [`docs/security/secrets.md`](docs/security/secrets.md) | Secret handling rules and what counts as a secret |
+| [`docs/security/role-endpoint-matrix.md`](docs/security/role-endpoint-matrix.md) | Role × endpoint permission matrix |
+| [`docs/security/threat-model.md`](docs/security/threat-model.md) | Threat model |
+| [`docs/security/security-testing-report.md`](docs/security/security-testing-report.md) | Security test results (271 passing tests) |
+| [`docs/security/dependency-audit.md`](docs/security/dependency-audit.md) | Dependency vulnerability audit |
+| **Frontend** | |
+| [`docs/frontend/structure.md`](docs/frontend/structure.md) | Frontend folder structure, routes and role guards |
+| [`docs/frontend/ui-guide.md`](docs/frontend/ui-guide.md) | Design tokens, accessibility, i18n, responsive patterns |
+| **Diagrams** | |
+| [`docs/diagrams/diagrams.md`](docs/diagrams/diagrams.md) | Class diagram, sequence diagrams (auth, request lifecycle), deployment diagram |
+| **API** | |
+| [`docs/postman/crisis-aid-platform.postman_collection.json`](docs/postman/crisis-aid-platform.postman_collection.json) | Postman collection (import into Postman or run with Newman) |
+| [`docs/postman/crisis-aid-platform.postman_environment.json`](docs/postman/crisis-aid-platform.postman_environment.json) | Postman environment (no secrets) |
+
+---
+
+## Team
+
+| Member | Name | GitHub | Area |
+|--------|------|--------|------|
+| 1 | Lasitha Sathruwan | @lasithasathruwan6-ctrl | Architecture, Security, Auth, Admin |
+| 2 | Hasindu Indusara | @hasindu-indusara | Database, Requests, Human-in-the-loop |
+| 3 | Sasmitha Thejan | @bandara331 | AI services, Resources |
+| 4 | Dimalsha Dewmini | @dimalsha-dewmini | Notifications, Mapping, Async |
+| 5 | Prageeth Ekanayake | @Madhusha-Prageeth | Shelters, Volunteers |
+| 6 | Rasindu Gimhana | @gimhanarasidu38-create | Citizens, Donations, QA / Testing / DevOps |
+
+---
 
 ## Security
-- **Threat Model & Matrix:** [docs/security/threat-model.md](docs/security/threat-model.md) and [docs/security/role-endpoint-matrix.md](docs/security/role-endpoint-matrix.md)
-- **Controls Implemented:** Security headers, strict single-origin CORS, auth rate limiting, password policy, hashed OTP with cooldown, short-lived JWTs + rotating/revokable refresh tokens, account lockout, AES-256-GCM NIC encryption + masking + keyed uniqueness hash, deny-by-default role policies + ownership scoping, single-use 24h staff invitations, two-person role change approval, log redaction, and upload signature validation.
-- **Verification & Audits:** [docs/security/security-testing-report.md](docs/security/security-testing-report.md) (271 passing tests) and [docs/security/dependency-audit.md](docs/security/dependency-audit.md).
 
-## Test Credentials
-*(dummy accounts per role to be added)*
+- Security headers, strict single-origin CORS, auth rate limiting, password policy, hashed OTP with cooldown, short-lived JWTs + rotating/revokable refresh tokens, account lockout, AES-256-GCM NIC encryption + masking + keyed uniqueness hash, deny-by-default role policies + ownership scoping, single-use 24h staff invitations, two-person role change approval, log redaction, upload signature validation.
+- **271 passing security tests.** See [`docs/security/security-testing-report.md`](docs/security/security-testing-report.md).
+- Secrets are never committed. See [`docs/security/secrets.md`](docs/security/secrets.md).
 
-## API Information
-Base URL: `/api/v1`. Swagger documents all endpoints. Postman collection in `/docs`.
+---
 
-## Git Workflow
-- No direct pushes to `main`; use feature branches + Pull Requests.
-- Branch naming: `feature/m<number>-<topic>`.
-- Every member commits with their own GitHub account.
+## CI Status
+
+| Workflow | Trigger |
+|----------|---------|
+| Backend build & test | Push / PR on `backend/**` |
+| Frontend lint, typecheck & build | Push / PR on `frontend/**` |
+| Dependabot | Weekly (Monday) for NuGet, npm, Actions |
+
+---
 
 ## Known Limitations
-*(to be updated before submission)*
+
+- No automated CD pipeline — deployment is currently manual.
+- No database migration framework — schema changes are applied via SQL scripts.
+- OTP delivery requires a live SMTP server; CI skips OTP-gated flows.
+- Frontend Docker image not yet provided.
