@@ -1,3 +1,4 @@
+using CrisisPlatform.Api.Common.Errors;
 using CrisisPlatform.Api.Common.Security;
 using CrisisPlatform.Api.Common.Security.Logging;
 using CrisisPlatform.Api.Modules.Requests;
@@ -7,6 +8,7 @@ builder.Logging.AddRedaction();
 
 // ── Core MVC / routing ──────────────────────────────────────────────────────
 builder.Services.AddControllers();
+builder.Services.AddApiProblemDetails();
 
 // ── OpenAPI / Swagger ───────────────────────────────────────────────────────
 builder.Services.AddOpenApi();
@@ -22,6 +24,7 @@ builder.Services.AddScoped<RequestService>();
 var app = builder.Build();
 
 // ── HTTP pipeline ─────────────────────────────────────────────────────────────
+app.UseExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
