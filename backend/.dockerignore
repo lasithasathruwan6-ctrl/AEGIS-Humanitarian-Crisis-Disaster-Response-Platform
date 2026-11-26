@@ -1,0 +1,35 @@
+# .dockerignore — backend
+# Prevents build output, test projects, IDE files and secrets from being
+# sent to the Docker daemon build context.
+
+# .NET build output
+**/bin/
+**/obj/
+
+# Test projects (never included in the API image)
+CrisisPlatform.Tests/
+
+# IDE and OS artefacts
+.vs/
+.vscode/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+
+# User-secrets (sensitive – never send to daemon)
+**/secrets.json
+**/.microsoft/usersecrets/
+
+# Environment files (use Docker secrets or env vars at runtime)
+.env
+.env.*
+!.env.example
+
+# Git history
+.git/
+.gitignore
+
+# Docs and scripts (not needed in the image)
+../../docs/
+../../scripts/
