@@ -1,4 +1,5 @@
 using CrisisPlatform.Api.Common.Errors;
+using CrisisPlatform.Api.Common.Pagination;
 
 namespace CrisisPlatform.Api.Modules.Requests;
 
@@ -95,6 +96,10 @@ public sealed class RequestService(TimeProvider clock)
             query = query.Where(r => r.District.Equals(district, StringComparison.OrdinalIgnoreCase));
         return query.Select(MapToDto).ToList();
     }
+
+    /// <summary>Returns a paginated list of requests, optionally filtered by district.</summary>
+    public PagedResult<RequestDto> ListPaged(PaginationQuery pagination, string? district = null) =>
+        List(district).ToPagedResult(pagination);
 
     /// <summary>Returns a single request by ID, or <c>null</c> when not found.</summary>
     public RequestDto? GetById(Guid id)

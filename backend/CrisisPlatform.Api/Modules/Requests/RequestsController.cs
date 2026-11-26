@@ -1,4 +1,5 @@
 using CrisisPlatform.Api.Common.Errors;
+using CrisisPlatform.Api.Common.Pagination;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CrisisPlatform.Api.Modules.Requests;
@@ -48,11 +49,14 @@ public sealed class RequestsController(RequestService service) : ControllerBase
         }
     }
 
-    /// <summary>List all requests, with optional district filter.</summary>
+    /// <summary>List requests with pagination and optional district filter.</summary>
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<RequestDto>), StatusCodes.Status200OK)]
-    public IActionResult GetAll([FromQuery] string? district) =>
-        Ok(service.List(district));
+    [ProducesResponseType(typeof(PagedResult<RequestDto>), StatusCodes.Status200OK)]
+    public IActionResult GetAll(
+        [FromQuery] string? district,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = PaginationQuery.DefaultPageSize) =>
+        Ok(service.ListPaged(new PaginationQuery(page, pageSize), district));
 
     /// <summary>Retrieve a single request by its unique ID.</summary>
     [HttpGet("{id:guid}")]
