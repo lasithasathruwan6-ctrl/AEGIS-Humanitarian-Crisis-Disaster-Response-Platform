@@ -350,6 +350,131 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Decisions & Audit",
+      "description": "Human-in-the-loop AI recommendation approval, rejection, and audit log verification.",
+      "item": [
+        {
+          "name": "Approve AI recommendation (coordinator)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{coordinatorAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/ai/recommendations/{{recommendationId}}/approve", "host": ["{{baseUrl}}"], "path": ["api","v1","ai","recommendations","{{recommendationId}}","approve"] },
+            "body": { "mode": "raw", "raw": "{\n  \"note\": \"Approved after manual review\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Decision status is Approved', () => {",
+                  "  pm.expect(pm.response.json().status).to.eql('Approved');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject AI recommendation (coordinator)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{coordinatorAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/ai/recommendations/{{recommendationId}}/reject", "host": ["{{baseUrl}}"], "path": ["api","v1","ai","recommendations","{{recommendationId}}","reject"] },
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Capacity already filled by prior allocation\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Citizen cannot approve recommendation (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/ai/recommendations/{{recommendationId}}/approve", "host": ["{{baseUrl}}"], "path": ["api","v1","ai","recommendations","{{recommendationId}}","approve"] },
+            "body": { "mode": "raw", "raw": "{}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Citizen gets 403', () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get audit log (admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/admin/audit-log", "host": ["{{baseUrl}}"], "path": ["api","v1","admin","audit-log"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Audit log is an array', () => pm.expect(pm.response.json()).to.be.an('array'));",
+                  "pm.test('Entries have required fields', () => {",
+                  "  const entries = pm.response.json();",
+                  "  if (entries.length > 0) {",
+                  "    pm.expect(entries[0]).to.have.property('action');",
+                  "    pm.expect(entries[0]).to.have.property('performedBy');",
+                  "    pm.expect(entries[0]).to.have.property('timestamp');",
+                  "  }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Non-admin cannot read audit log (403)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/admin/audit-log", "host": ["{{baseUrl}}"], "path": ["api","v1","admin","audit-log"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Citizen gets 403', () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
