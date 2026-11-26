@@ -1,0 +1,51 @@
+name: Frontend — Lint, Typecheck and Build
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend.yml"
+
+jobs:
+  lint-typecheck-build:
+    name: Lint, typecheck and build (Node.js LTS)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint (ESLint — zero warnings)
+        run: npm run lint
+
+      - name: Typecheck (tsc --noEmit)
+        run: npm run typecheck
+
+      - name: Unit tests (Vitest)
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+        env:
+          # Suppress Next.js telemetry in CI.
+          NEXT_TELEMETRY_DISABLED: "1"
