@@ -16,8 +16,10 @@ public sealed class RequestsController(RequestService service) : ControllerBase
     /// <summary>Submit a new aid request.</summary>
     [HttpPost]
     [ProducesResponseType(typeof(RequestDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     public IActionResult Create(
         [FromBody] CreateRequestDto dto,
         [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey)

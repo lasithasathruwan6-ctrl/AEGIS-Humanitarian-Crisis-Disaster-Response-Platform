@@ -19,6 +19,7 @@ public static class OpenApiExtensions
         {
             options.AddDocumentTransformer<JwtBearerDocumentTransformer>();
             options.AddSchemaTransformer<RequestExampleSchemaTransformer>();
+            options.AddOperationTransformer<StandardErrorResponsesOperationTransformer>();
         });
 
         return services;
@@ -77,6 +78,38 @@ public static class OpenApiExtensions
                         ["contactPhone"] = "0771234567",
                     }
                 ];
+            }
+
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class StandardErrorResponsesOperationTransformer : IOpenApiOperationTransformer
+    {
+        private static readonly (string Code, string Description)[] StandardErrors =
+        [
+            ("400", "Bad Request — validation failed or required header missing."),
+            ("401", "Unauthorized — missing or invalid JWT bearer token."),
+            ("403", "Forbidden — authenticated user lacks the required role or scope."),
+            ("409", "Conflict — idempotency key reused with a different payload or state conflict."),
+        ];
+
+        public Task TransformAsync(
+            OpenApiOperation operation,
+            OpenApiOperationTransformerContext context,
+            CancellationToken cancellationToken)
+        {
+            operation.Responses ??= new OpenApiResponses();
+
+            foreach (var (code, description) in StandardErrors)
+            {
+                if (!operation.Responses.ContainsKey(code))
+                {
+                    operation.Responses[code] = new OpenApiResponse
+                    {
+                        Description = description,
+                    };
+                }
             }
 
             return Task.CompletedTask;
