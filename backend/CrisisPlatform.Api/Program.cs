@@ -1,4 +1,5 @@
 using CrisisPlatform.Api.Common.Errors;
+using CrisisPlatform.Api.Common.OpenApi;
 using CrisisPlatform.Api.Common.Security;
 using CrisisPlatform.Api.Common.Security.Logging;
 using CrisisPlatform.Api.Modules.Requests;
@@ -11,7 +12,7 @@ builder.Services.AddControllers();
 builder.Services.AddApiProblemDetails();
 
 // ── OpenAPI / Swagger ───────────────────────────────────────────────────────
-builder.Services.AddOpenApi();
+builder.Services.AddCrisisOpenApi();
 
 // ── Cross-cutting middleware ─────────────────────────────────────────────────
 builder.Services.AddFrontendCors(builder.Configuration);
