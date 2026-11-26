@@ -1,4 +1,5 @@
 using CrisisPlatform.Api.Common.Errors;
+using CrisisPlatform.Api.Common.Health;
 using CrisisPlatform.Api.Common.OpenApi;
 using CrisisPlatform.Api.Common.Security;
 using CrisisPlatform.Api.Common.Security.Logging;
@@ -21,6 +22,7 @@ builder.Services.AddAuthRateLimiting(builder.Configuration);
 // ── Module services ──────────────────────────────────────────────────────────
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<RequestService>();
+builder.Services.AddServiceHealthChecks();
 
 var app = builder.Build();
 
@@ -38,5 +40,6 @@ app.UseRateLimiter();
 
 app.UseRouting();
 app.MapControllers();
+app.MapServiceHealthEndpoints();
 
 app.Run();
