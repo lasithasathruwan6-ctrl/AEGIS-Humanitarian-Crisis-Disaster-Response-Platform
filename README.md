@@ -59,7 +59,11 @@ dotnet user-secrets set "Auth:Tokens:SigningKey" "<48+ chars>" --project backend
 # ... set remaining secrets (see docs/env-reference.md)
 
 dotnet run --project backend/CrisisPlatform.Api
+dotnet test backend/CrisisPlatform.Tests
 ```
+- **OpenAPI / Swagger:** `/openapi/v1.json` (JWT Bearer auth, DTO examples, 400/401/403/409 responses)
+- **Health Checks:** `/health` and `/health/services` (`database`, `ai`, `email`)
+- **Documentation:** [docs/backend/architecture-layers.md](docs/backend/architecture-layers.md) (layers, patterns, resilience, outbox) and [docs/backend/api-endpoints.md](docs/backend/api-endpoints.md) (endpoints, pagination, error codes)
 
 **Frontend**
 
