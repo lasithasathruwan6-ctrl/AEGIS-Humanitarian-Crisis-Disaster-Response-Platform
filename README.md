@@ -1,4 +1,4 @@
-# Crisis Aid Platfor
+# Crisis Aid Platfo
 
 **SE205.3 Software Architecture Coursework 2026**
 AI-Powered Humanitarian Crisis Management and Aid Coordination Platform
