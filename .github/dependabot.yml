@@ -1,0 +1,46 @@
+version: 2
+updates:
+  # .NET NuGet packages
+  - package-ecosystem: nuget
+    directory: "/backend"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "backend"
+    reviewers:
+      - "lasithasathruwan6-ctrl"
+    commit-message:
+      prefix: "chore(deps)"
+
+  # npm packages for the frontend
+  - package-ecosystem: npm
+    directory: "/frontend"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "frontend"
+    reviewers:
+      - "lasithasathruwan6-ctrl"
+    commit-message:
+      prefix: "chore(deps)"
+
+  # GitHub Actions
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci"
+    reviewers:
+      - "lasithasathruwan6-ctrl"
+    commit-message:
+      prefix: "chore(deps)"
