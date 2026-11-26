@@ -75,6 +75,14 @@ npm run dev      # http://localhost:3000
 
 ---
 
+## AI Services & Governance
+
+- **Architecture & Safety:** [docs/ai/overview.md](docs/ai/overview.md) (deterministic triage, PII redaction, Groq fallback, governance modes, copilot, volunteer matching, donation anomaly detection)
+- **Prompt Templates & Guardrails:** [docs/ai/prompts.md](docs/ai/prompts.md)
+- **Limitations & Evaluation:** [docs/ai/limitations-and-evaluation.md](docs/ai/limitations-and-evaluation.md)
+
+---
+
 ## Running Tests
 
 **Backend (xUnit)**
