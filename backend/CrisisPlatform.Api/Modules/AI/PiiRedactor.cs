@@ -14,13 +14,13 @@ public static partial class PiiRedactor
         return text;
     }
 
-    [GeneratedRegex(@"\b\d{9}[vVxX]\b")]
+    [GeneratedRegex(@"\b\d{9}\s?[vVxX]\b")]
     private static partial Regex OldNicRegex();
 
     [GeneratedRegex(@"\b\d{12}\b")]
     private static partial Regex NewNicRegex();
 
-    [GeneratedRegex(@"(?:\+94|0)7\d{8}\b")]
+    [GeneratedRegex(@"(?<!\d)(?:\+94[\s-]?|0)7\d(?:[\s-]?\d){7}\b")]
     private static partial Regex PhoneRegex();
 
     [GeneratedRegex(@"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")]

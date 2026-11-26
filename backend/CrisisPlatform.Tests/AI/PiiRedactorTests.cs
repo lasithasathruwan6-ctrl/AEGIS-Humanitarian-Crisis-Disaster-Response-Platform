@@ -27,4 +27,15 @@ public class PiiRedactorTests
         Assert.Contains("[REDACTED_PHONE]", redacted);
         Assert.Contains("[REDACTED_EMAIL]", redacted);
     }
+
+    [Fact]
+    public void Redact_ShouldHandleSpacedPhonesAndLowercaseSpacedNic()
+    {
+        var input = "Reach +94 77 123 4567 or 071-987-6543, NIC 901234567 x.";
+        var redacted = PiiRedactor.Redact(input);
+
+        Assert.DoesNotContain("123 4567", redacted);
+        Assert.DoesNotContain("987-6543", redacted);
+        Assert.DoesNotContain("901234567", redacted);
+    }
 }
