@@ -1,0 +1,61 @@
+version: "3.9"
+
+# Crisis Aid Platform — local development compose file.
+# Starts the ASP.NET Core API and a SQL Server instance together.
+#
+# Usage:
+#   docker compose up --build          # first run
+#   docker compose up                  # subsequent runs
+#   docker compose down -v             # stop and remove volumes
+#
+# Secrets: copy .env.example to .env and fill in the values.
+# The .env file is git-ignored and must never be committed.
+
+services:
+  # -------------------------------------------------------------------------
+  # SQL Server 2022
+  # -------------------------------------------------------------------------
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${DB_SA_PASSWORD}"
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\" -No -C || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  # -------------------------------------------------------------------------
+  # ASP.NET Core API
+  # -------------------------------------------------------------------------
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: "Server=db,1433;Database=CrisisPlatform;User Id=sa;Password=${DB_SA_PASSWORD};TrustServerCertificate=True;"
+      Auth__Tokens__SigningKey: "${Auth__Tokens__SigningKey}"
+      Security__NicEncryptionKey: "${Security__NicEncryptionKey}"
+      Security__NicHashKey: "${Security__NicHashKey}"
+      Security__OtpHashKey: "${Security__OtpHashKey}"
+      Cors__AllowedOrigin: "http://localhost:3000"
+      Smtp__Host: "${Smtp__Host}"
+      Smtp__Username: "${Smtp__Username}"
+      Smtp__Password: "${Smtp__Password}"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+volumes:
+  sqldata:
