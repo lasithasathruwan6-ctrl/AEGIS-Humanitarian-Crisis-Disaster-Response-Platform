@@ -475,6 +475,107 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Conflict (409)",
+      "description": "Verifies that allocating more people than a shelter's capacity returns HTTP 409 Conflict.",
+      "item": [
+        {
+          "name": "Allocate within capacity",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/shelters/{{shelterId}}/allocations", "host": ["{{baseUrl}}"], "path": ["api","v1","shelters","{{shelterId}}","allocations"] },
+            "body": { "mode": "raw", "raw": "{\n  \"occupants\": 1\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Within-capacity allocation succeeds', () => {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Allocate exceeding capacity returns 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/shelters/{{shelterId}}/allocations", "host": ["{{baseUrl}}"], "path": ["api","v1","shelters","{{shelterId}}","allocations"] },
+            "body": { "mode": "raw", "raw": "{\n  \"occupants\": 999999\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Exceeding capacity returns 409 Conflict', () => pm.response.to.have.status(409));",
+                  "pm.test('Error body describes the conflict', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('error');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Citizen cannot allocate (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/shelters/{{shelterId}}/allocations", "host": ["{{baseUrl}}"], "path": ["api","v1","shelters","{{shelterId}}","allocations"] },
+            "body": { "mode": "raw", "raw": "{\n  \"occupants\": 1\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Citizen gets 403 Forbidden', () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unauthenticated allocation is rejected (401)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/shelters/{{shelterId}}/allocations", "host": ["{{baseUrl}}"], "path": ["api","v1","shelters","{{shelterId}}","allocations"] },
+            "body": { "mode": "raw", "raw": "{\n  \"occupants\": 1\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Unauthenticated request gets 401', () => pm.response.to.have.status(401));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
