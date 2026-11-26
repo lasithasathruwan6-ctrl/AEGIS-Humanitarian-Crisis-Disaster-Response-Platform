@@ -206,6 +206,150 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Request Lifecycle",
+      "description": "Create a citizen request, view it, assign it (staff), and update its status.",
+      "item": [
+        {
+          "name": "Create request (citizen)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/requests", "host": ["{{baseUrl}}"], "path": ["api","v1","requests"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"Medical\",\n  \"description\": \"Need insulin — diabetes medication ran out\",\n  \"location\": { \"latitude\": 6.9271, \"longitude\": 79.8612 }\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Request id is returned', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('id');",
+                  "  pm.collectionVariables.set('requestId', body.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "View own request (citizen)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/requests/{{requestId}}", "host": ["{{baseUrl}}"], "path": ["api","v1","requests","{{requestId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Id matches', () => {",
+                  "  pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('requestId'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List all requests (staff)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{staffAccessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/requests", "host": ["{{baseUrl}}"], "path": ["api","v1","requests"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Assign request (staff)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/requests/{{requestId}}/assign", "host": ["{{baseUrl}}"], "path": ["api","v1","requests","{{requestId}}","assign"] },
+            "body": { "mode": "raw", "raw": "{\n  \"volunteerId\": \"{{volunteerId}}\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update status to InProgress (staff)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{staffAccessToken}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/api/v1/requests/{{requestId}}/status", "host": ["{{baseUrl}}"], "path": ["api","v1","requests","{{requestId}}","status"] },
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"InProgress\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Citizen cannot list all requests (403)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/v1/requests", "host": ["{{baseUrl}}"], "path": ["api","v1","requests"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Citizen cannot list all requests — 403', () => pm.response.to.have.status(403));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
     }
   ]
 }
