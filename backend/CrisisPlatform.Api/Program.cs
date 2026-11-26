@@ -1,18 +1,27 @@
 using CrisisPlatform.Api.Common.Security;
 using CrisisPlatform.Api.Common.Security.Logging;
+using CrisisPlatform.Api.Modules.Requests;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddRedaction();
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// ── Core MVC / routing ──────────────────────────────────────────────────────
+builder.Services.AddControllers();
+
+// ── OpenAPI / Swagger ───────────────────────────────────────────────────────
 builder.Services.AddOpenApi();
+
+// ── Cross-cutting middleware ─────────────────────────────────────────────────
 builder.Services.AddFrontendCors(builder.Configuration);
 builder.Services.AddAuthRateLimiting(builder.Configuration);
 
+// ── Module services ──────────────────────────────────────────────────────────
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<RequestService>();
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// ── HTTP pipeline ─────────────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -23,28 +32,7 @@ app.UseHttpsRedirection();
 app.UseCors(CorsExtensions.PolicyName);
 app.UseRateLimiter();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.UseRouting();
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
