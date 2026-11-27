@@ -83,6 +83,14 @@ npm run dev      # http://localhost:3000
 
 ---
 
+## Database
+
+- **Engine:** SQL Server 2022 (`mcr.microsoft.com/mssql/server:2022-latest`), applied via ordered, idempotent T-SQL scripts under `database/migrations/` and reference seeds under `database/seeds/`.
+- **Integrity & Security:** Filtered unique indexes (`NicHash`, `IdempotencyKey`), `CHECK` constraints (`CurrentOccupancy <= Capacity`, `Quantity >= 0`, four-eyes approver rules), `ROWVERSION` optimistic concurrency, soft-delete (`DeletedAt`), and append-only `AuditEntries` protected by `INSTEAD OF` triggers + SHA-256 hash chain.
+- **Docs:** [Schema Overview](docs/database/schema-overview.md) · [ER Diagram](docs/database/er-diagram.md) · [Data Dictionary](docs/database/data-dictionary.md) · [Migrations Guide](docs/database/migrations.md) · [Connections](docs/database/connections.md) · [Backup & Restore](docs/database/backup-restore.md)
+
+---
+
 ## Running Tests
 
 **Backend (xUnit)**
