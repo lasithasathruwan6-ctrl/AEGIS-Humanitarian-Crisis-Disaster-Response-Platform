@@ -13,8 +13,7 @@
 | Resource | URL |
 | --- | --- |
 | **Live Web Application (Vercel)** | https://aegis-platform-seven.vercel.app/ |
-| **Demo Video (NSBM OneDrive)** | `[PASTE ONEDRIVE DEMO VIDEO LINK]` |
-| **Source Code (NSBM OneDrive)** | `[PASTE ONEDRIVE SOURCE CODE LINK]` |
+
 
 ---
 
