@@ -101,6 +101,32 @@ public sealed class RequestService(TimeProvider clock)
     public PagedResult<RequestDto> ListPaged(PaginationQuery pagination, string? district = null) =>
         List(district).ToPagedResult(pagination);
 
+    /// <summary>
+    /// Returns a read-only, projected queue page filtered by optional <paramref name="status"/>
+    /// and <paramref name="district"/>, ordered by highest urgency then oldest submission.
+    /// Aligns with <c>IX_AidRequests_Status_District_CreatedAt</c> and <c>AsNoTracking()</c>
+    /// direct DTO projection when backed by EF Core.
+    /// </summary>
+    public PagedResult<RequestDto> ListQueue(
+        PaginationQuery pagination,
+        string? status = null,
+        string? district = null)
+    {
+        var query = _store.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(status))
+            query = query.Where(r => r.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(district))
+            query = query.Where(r => r.District.Equals(district, StringComparison.OrdinalIgnoreCase));
+
+        return query
+            .OrderByDescending(r => r.Urgency)
+            .ThenBy(r => r.CreatedAt)
+            .Select(MapToDto)
+            .ToPagedResult(pagination);
+    }
+
     /// <summary>Returns a single request by ID, or <c>null</c> when not found.</summary>
     public RequestDto? GetById(Guid id)
     {
