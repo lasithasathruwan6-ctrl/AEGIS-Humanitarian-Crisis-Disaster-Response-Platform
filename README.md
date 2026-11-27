@@ -1,5 +1,4 @@
-# Crisis Aid Platform
-
+AEGIS — Humanitarian Crisis & Disaster Response Platform
 **SE205.3 – Software Architecture Coursework 2026 | Group 15 | NSBM Green University**  
 **AI-Powered Humanitarian Crisis Management and Aid Coordination Platform**
 
