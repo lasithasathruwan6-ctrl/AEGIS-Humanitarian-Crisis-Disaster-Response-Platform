@@ -1,190 +1,167 @@
-# Crisis Aid Platform
+# AEGIS — Humanitarian Crisis & Disaster Response Platform
 
-**SE205.3 Software Architecture Coursework 2026**  
-AI-Powered Humanitarian Crisis Management and Aid Coordination Platform
+**SE205.3 – Software Architecture | Group 15 | NSBM Green University**
 
-A multi-organisation platform for coordinating emergency assistance, shelters, volunteers, resources, donations and AI-assisted (human-approved) decision-making during disasters.
+**AEGIS** is a full-stack, trilingual (English, Sinhala, Tamil) humanitarian crisis coordination platform built for Sri Lanka's 25 districts. It connects citizens, emergency coordinators, shelter administrators, logistics teams, volunteers, and donors under one core principle:
 
----
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Backend | ASP.NET Core 10 Web API (C#, .NET 10) |
-| Database | SQL Server 2022 |
-| Frontend | Next.js 15 (App Router, React 19, TypeScript) |
-| API Docs | OpenAPI / Swagger |
-| Architecture | Modular Monolith |
-| Containerisation | Docker + Docker Compose |
-| CI | GitHub Actions |
+> **AI only recommends, scores, drafts, or flags. Named, authenticated human staff always decide, approve, send, and publish — with every critical action sealed in a SHA-256 hash-chained audit ledger.**
 
 ---
 
-## Quick Start
+## Live Deployment & Submission Links
+
+| Resource | URL |
+| --- | --- |
+| **Live Web Application (Vercel)** | https://aegis-platform-seven.vercel.app/ |
+| **Demo Video (NSBM OneDrive)** | `[PASTE ONEDRIVE DEMO VIDEO LINK]` |
+| **Source Code (NSBM OneDrive)** | `[PASTE ONEDRIVE SOURCE CODE LINK]` |
+
+---
+
+## System Architecture & Tech Stack
+
+| Layer | Technology | Location |
+| --- | --- | --- |
+| **Frontend** | Next.js 15 (App Router), React 19, TypeScript, Leaflet, OpenStreetMap | `./src` |
+| **Backend API** | ASP.NET Core Web API (.NET 10, C#), FluentValidation, Serilog | `./aegis-api` |
+| **Database** | Supabase PostgreSQL (Npgsql, `aegis` schema, 44 tables) & local SQL Server | `AegisDbContext` |
+| **AI & NLU** | Rule-based explainable heuristic engine + Groq Cloud API (facts-only, PII-redacted) | `RuleBasedAiProvider`, `GroqMultilingualNluService`, `AiCopilotService` |
+| **Weather & Flood Data** | Open-Meteo Forecast & Flood APIs | `PredictionService`, `WeatherAlertService` |
+| **Route Optimisation** | Google OR-Tools (`9.15.6755`) + OSRM / Google Routes (Haversine fallback) | `OrToolsDispatchOptimiser`, `OsrmRoutingService` |
+| **Notifications** | Transactional Outbox + Brevo / Resend HTTPS email API | `NotificationOutboxWorker`, `SmtpEmailSender` |
+| **Hosting** | Vercel (Frontend), Railway Docker (API + Workers), Supabase (PostgreSQL) | `aegis-api/Dockerfile` |
+
+### Clean Architecture (`aegis-api/src`)
+- **`Aegis.Domain`** — `BaseEntity`, 30+ domain entities, enums (`AegisRoles`, `RequestStatus`, `RequestPriority`, `DecisionAction`), `Result<T>`, domain events, and repository/UoW interfaces.
+- **`Aegis.Application`** — Service interfaces, DTOs, FluentValidation validators, Strategy implementations (`MaxUrgencyStrategy`, `FairShareStrategy`, `FastestEtaStrategy`), and Factories (`NotificationFactory`, `RecommendationFactory`).
+- **`Aegis.Infrastructure`** — EF Core persistence (`AegisDbContext`), PostgreSQL migrations, `AuditService` (SHA-256 hash chain), `NicCryptoService` (AES-256-GCM + HMAC-SHA256), `PiiRedactor`, `LocalFileStorage`, and background workers (`NotificationOutboxWorker`, `WeatherAlertEvaluationWorker`).
+- **`Aegis.Api`** — Thin REST controllers under `/api/v1`, JWT authentication, policy-based RBAC (`StaffOnly`, `CanDecide`, `AuditAccess`, `AdminOnly`), rate limiting, security headers, and Swagger.
+
+---
+
+## Installation & Configuration
 
 ### Prerequisites
-
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Node.js 20 LTS](https://nodejs.org)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for the compose workflow)
-- Git
+- [Node.js 20 LTS](https://nodejs.org/) & npm
+- Supabase PostgreSQL connection string (Session Pooler, port `5432`, TLS required) or local SQL Server
 
-### Option A — Docker Compose (recommended)
-
-```bash
-git clone https://github.com/lasithasathruwan6-ctrl/crisis-aid-platform.git
-cd crisis-aid-platform
-
-# Copy the example env file and fill in secrets (see docs/env-reference.md)
-cp .env.example .env
-
-# Start API + SQL Server together
-docker compose up --build
+### 1. Backend API (`aegis-api`)
+Configure secrets with `dotnet user-secrets` (never commit real secrets to Git):
+```powershell
+cd aegis-api/src/Aegis.Api
+dotnet user-secrets set "ConnectionStrings:Default" "<supabase-session-pooler-connection-string>"
+dotnet user-secrets set "Jwt:Key" "<strong-32+-char-jwt-secret>"
+dotnet user-secrets set "NicCrypto:EncryptionKey" "<base64-32-byte-aes-key>"
+dotnet user-secrets set "NicCrypto:HmacKey" "<base64-32-byte-hmac-key>"
+dotnet user-secrets set "Groq:ApiKey" "<optional-groq-api-key>"
+dotnet user-secrets set "GoogleMaps:ApiKey" "<optional-google-routes-key>"
 ```
 
-| Service | URL |
-|---------|-----|
-| API | http://localhost:8080 |
-| Swagger | http://localhost:8080/openapi |
-
-### Option B — Run directly
-
-**Backend**
-
-```bash
-# Set secrets with dotnet user-secrets
-dotnet user-secrets init --project backend/CrisisPlatform.Api
-dotnet user-secrets set "Auth:Tokens:SigningKey" "<48+ chars>" --project backend/CrisisPlatform.Api
-# ... set remaining secrets (see docs/env-reference.md)
-
-dotnet run --project backend/CrisisPlatform.Api
-dotnet test backend/CrisisPlatform.Tests
+Apply EF Core migrations (or run `supabase/migrations/20261116000000_aegis_schema.sql`), bootstrap the first `SystemAdmin`, and start the API:
+```powershell
+dotnet ef database update --project aegis-api/src/Aegis.Infrastructure --startup-project aegis-api/src/Aegis.Api
+dotnet run --project aegis-api/src/Aegis.Api -- bootstrap-admin --email admin@aegis.lk --full-name "System Admin"
+dotnet run --project aegis-api/src/Aegis.Api
 ```
-- **OpenAPI / Swagger:** `/openapi/v1.json` (JWT Bearer auth, DTO examples, 400/401/403/409 responses)
-- **Health Checks:** `/health` and `/health/services` (`database`, `ai`, `email`)
-- **Documentation:** [docs/backend/architecture-layers.md](docs/backend/architecture-layers.md) (layers, patterns, resilience, outbox) and [docs/backend/api-endpoints.md](docs/backend/api-endpoints.md) (endpoints, pagination, error codes)
 
-**Frontend**
+### 2. Frontend (`./src`)
+Create `.env.local` in the repository root (see `.env.example`):
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api/v1
+```
+Install dependencies and run:
+```powershell
+npm install
+npm run dev
+```
+Open `http://localhost:3000`.
 
-```bash
-cd frontend
-npm ci
-npm run dev      # http://localhost:3000
+### 3. Environment Variables Reference
+- **Backend (`aegis-api`):** `ConnectionStrings__Default`, `Jwt__Key`, `Jwt__Issuer`, `Jwt__Audience`, `NicCrypto__EncryptionKey`, `NicCrypto__HmacKey`, `Groq__ApiKey`, `Groq__Model`, `GoogleMaps__ApiKey`, `Smtp__Host`, `Smtp__Port`, `Smtp__Username`, `Smtp__Password`, `Smtp__FromEmail`, `Channel__Secret`, `Cors__FrontendOrigin`.
+- **Frontend:** `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (optional).
+
+---
+
+## Test Credentials (For Evaluators)
+
+> **Note:** Use these demo accounts on the live deployment (`https://aegis-platform-seven.vercel.app/`). Staff sign in via `/staff/login`; citizens sign in via `/login`.
+
+| Role | Login Page | Email | Password |
+| --- | --- | --- | --- |
+| **System Admin / Staff** | `/staff/login` | `[ENTER DEMO STAFF EMAIL]` | `[ENTER DEMO STAFF PASSWORD]` |
+| **Citizen** | `/login` | `[ENTER DEMO CITIZEN EMAIL]` | `[ENTER DEMO CITIZEN PASSWORD]` |
+
+*(New citizens can also register at `/register` using a valid Sri Lankan NIC format and a real email address to receive the 6-digit OTP.)*
+
+---
+
+## API Information
+
+- **Base Path:** `/api/v1`
+- **Swagger / OpenAPI (Development):** `/swagger`
+- **Health Check:** `GET /api/v1/health` and `GET /health`
+- **Authentication:** Short-lived JWT Bearer access tokens (15 min) + rotating SHA-256 hashed refresh tokens. Next.js proxies tokens in an `httpOnly`, `SameSite=Lax` cookie (`aegis_token`).
+
+### Main Endpoint Groups
+| Module | Base Route | Key Operations |
+| --- | --- | --- |
+| **Auth & Profile** | `/api/v1/auth`, `/api/v1/account` | Register (NIC + OTP), verify email, citizen/staff login, refresh, logout, profile |
+| **Requests & Cases** | `/api/v1/requests`, `/api/v1/cases` | Create (idempotent), track, chat, upload evidence, cancel, feedback, duplicate merge |
+| **AI & Governance** | `/api/v1/ai`, `/api/v1/admin/ai` | Recommendations, human decision (`Approve/Modify/Reject/Defer`), mode (`Active/Shadow/Off`), analytics, copilot, stock forecast, district risk |
+| **Alerts** | `/api/v1/alerts` | Official alerts, automated weather drafts, approve/retract/false-alarm, dry-run, signed unsubscribe |
+| **Logistics** | `/api/v1/shelters`, `/api/v1/resources`, `/api/v1/scenarios` | Shelter Overpass import & occupancy (`409 Conflict` guard), stock dispatch, shortage simulation |
+| **Dispatch** | `/api/v1/dispatch` | Vehicle fleet management, OR-Tools route preview, human approval (2-person rule for critical stops) |
+| **Volunteers & Donations** | `/api/v1/volunteers`, `/api/v1/campaigns`, `/api/v1/donations` | Volunteer registration, verification, skill/distance matching, campaign & anomaly review |
+| **Audit Ledger** | `/api/v1/audit` | Paginated audit entries, `GET /api/v1/audit/verify` (SHA-256 chain integrity check) |
+
+### Postman Collection
+- Collection file: [`docs/postman/aegis.postman_collection.json`](docs/postman/aegis.postman_collection.json)
+- Verified against the live Railway deployment with **29 requests across 8 folders** — **35 / 35 assertions passed** (mean response time `987 ms`).
+
+---
+
+## Testing & Verification
+
+```powershell
+# Backend unit tests (71 / 71 passed)
+dotnet test aegis-api/tests/Aegis.UnitTests/Aegis.UnitTests.csproj
+
+# Backend integration tests (1 active passed; Testcontainers test skipped without local Docker)
+dotnet test aegis-api/tests/Aegis.IntegrationTests/Aegis.IntegrationTests.csproj
+
+# Frontend typecheck and production build (48 / 48 routes, zero errors)
+npm run typecheck
+npm run build
 ```
 
 ---
 
-## AI Services & Governance
+## Known Limitations & Future Work
 
-- **Architecture & Safety:** [docs/ai/overview.md](docs/ai/overview.md) (deterministic triage, PII redaction, Groq fallback, governance modes, copilot, volunteer matching, donation anomaly detection)
-- **Prompt Templates & Guardrails:** [docs/ai/prompts.md](docs/ai/prompts.md)
-- **Limitations & Evaluation:** [docs/ai/limitations-and-evaluation.md](docs/ai/limitations-and-evaluation.md)
-
----
-
-## Database
-
-- **Engine:** SQL Server 2022 (`mcr.microsoft.com/mssql/server:2022-latest`), applied via ordered, idempotent T-SQL scripts under `database/migrations/` and reference seeds under `database/seeds/`.
-- **Integrity & Security:** Filtered unique indexes (`NicHash`, `IdempotencyKey`), `CHECK` constraints (`CurrentOccupancy <= Capacity`, `Quantity >= 0`, four-eyes approver rules), `ROWVERSION` optimistic concurrency, soft-delete (`DeletedAt`), and append-only `AuditEntries` protected by `INSTEAD OF` triggers + SHA-256 hash chain.
-- **Docs:** [Schema Overview](docs/database/schema-overview.md) · [ER Diagram](docs/database/er-diagram.md) · [Data Dictionary](docs/database/data-dictionary.md) · [Migrations Guide](docs/database/migrations.md) · [Connections](docs/database/connections.md) · [Backup & Restore](docs/database/backup-restore.md)
-
----
-
-## Running Tests
-
-**Backend (xUnit)**
-
-```bash
-dotnet test backend/CrisisPlatform.Tests/CrisisPlatform.Tests.csproj
-```
-
-**Frontend (Vitest)**
-
-```bash
-cd frontend
-npm test
-```
-
-**API (Newman / Postman)**
-
-```bash
-# Install Newman
-npm install -g newman
-
-# Run the full collection against localhost:8080
-bash scripts/run-newman.sh
-```
-
-See [`docs/testing/newman-guide.md`](docs/testing/newman-guide.md) for detailed instructions.
+- **Heuristic Triage Scoring:** Priority scoring uses deterministic developer-defined rules rather than a trained ML model; no formal accuracy benchmark was conducted on historical disaster datasets.
+- **External Service Dependence:** Weather advisories and NLU depend on Open-Meteo and Groq availability (mitigated with stale-data guards, numeric validation, and fixed trilingual template fallbacks).
+- **Single-Instance Realtime Signals:** `InMemoryRealtimeSignalPublisher` (SSE) and `AiRateLimiter` run in-process; horizontal multi-replica scaling requires a shared Redis backplane.
+- **Ephemeral Evidence Storage:** `LocalFileStorage` stores uploaded evidence under `App_Data/evidence`, requiring a persistent volume or object storage (e.g., S3 / Supabase Storage) in stateless container hosts.
+- **Excluded Channels (Future Work):** Native mobile apps, Sri Lankan SMS gateway integration, Web Push notifications, and offline-first volunteer sync are planned for future iterations.
 
 ---
 
 ## Documentation Index
-
-| Document | Description |
-|----------|-------------|
-| [`docs/deploy.md`](docs/deploy.md) | Full deployment guide (local, Docker, production, rollback) |
-| [`docs/env-reference.md`](docs/env-reference.md) | Every environment variable, its purpose and format |
-| [`docs/release-checklist.md`](docs/release-checklist.md) | Pre-release checklist (code, security, testing, deployment) |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Commit style, branch workflow, review process, folder ownership |
-| **Testing** | |
-| [`docs/testing/test-plan.md`](docs/testing/test-plan.md) | Test strategy, scope, environments and defect policy |
-| [`docs/testing/coverage-table.md`](docs/testing/coverage-table.md) | Feature × test-type coverage matrix |
-| [`docs/testing/newman-guide.md`](docs/testing/newman-guide.md) | How to run the Postman collection with Newman |
-| [`docs/testing/uat-form.md`](docs/testing/uat-form.md) | UAT test cases (40 cases across all roles) |
-| [`docs/testing/uat-results-template.md`](docs/testing/uat-results-template.md) | UAT results recording template |
-| **Security** | |
-| [`docs/security/secrets.md`](docs/security/secrets.md) | Secret handling rules and what counts as a secret |
-| [`docs/security/role-endpoint-matrix.md`](docs/security/role-endpoint-matrix.md) | Role × endpoint permission matrix |
-| [`docs/security/threat-model.md`](docs/security/threat-model.md) | Threat model |
-| [`docs/security/security-testing-report.md`](docs/security/security-testing-report.md) | Security test results (271 passing tests) |
-| [`docs/security/dependency-audit.md`](docs/security/dependency-audit.md) | Dependency vulnerability audit |
-| **Frontend** | |
-| [`docs/frontend/structure.md`](docs/frontend/structure.md) | Frontend folder structure, routes and role guards |
-| [`docs/frontend/ui-guide.md`](docs/frontend/ui-guide.md) | Design tokens, accessibility, i18n, responsive patterns |
-| **Diagrams** | |
-| [`docs/diagrams/diagrams.md`](docs/diagrams/diagrams.md) | Class diagram, sequence diagrams (auth, request lifecycle), deployment diagram |
-| **API** | |
-| [`docs/postman/crisis-aid-platform.postman_collection.json`](docs/postman/crisis-aid-platform.postman_collection.json) | Postman collection (import into Postman or run with Newman) |
-| [`docs/postman/crisis-aid-platform.postman_environment.json`](docs/postman/crisis-aid-platform.postman_environment.json) | Postman environment (no secrets) |
+- [`docs/architecture.md`](docs/architecture.md) — Clean Architecture layers, design patterns, and event flow
+- [`docs/database.md`](docs/database.md) — Supabase PostgreSQL schema `aegis`, constraints, concurrency, and RLS
+- [`docs/security.md`](docs/security.md) — JWT/OTP auth, 9-role RBAC matrix, NIC encryption, and AI safety controls
+- [`docs/deploy.md`](docs/deploy.md) — Vercel, Docker (OR-Tools `libgomp1`), Supabase pooler, and hardening checklist
 
 ---
 
-## Team
+## Team — Group 15
 
-| Member | Name | GitHub | Area |
-|--------|------|--------|------|
-| 1 | Lasitha Sathruwan | @lasithasathruwan6-ctrl | Architecture, Security, Auth, Admin |
-| 2 | Hasindu Indusara | @hasindu-indusara | Database, Requests, Human-in-the-loop |
-| 3 | Sasmitha Thejan | @bandara331 | AI services, Resources |
-| 4 | Dimalsha Dewmini | @dimalsha-dewmini | Notifications, Mapping, Async |
-| 5 | Prageeth Ekanayake | @Madhusha-Prageeth | Shelters, Volunteers |
-| 6 | Rasindu Gimhana | @gimhanarasidu38-create | Citizens, Donations, QA / Testing / DevOps |
-
----
-
-## Security
-
-- Security headers, strict single-origin CORS, auth rate limiting, password policy, hashed OTP with cooldown, short-lived JWTs + rotating/revokable refresh tokens, account lockout, AES-256-GCM NIC encryption + masking + keyed uniqueness hash, deny-by-default role policies + ownership scoping, single-use 24h staff invitations, two-person role change approval, log redaction, upload signature validation.
-- **271 passing security tests.** See [`docs/security/security-testing-report.md`](docs/security/security-testing-report.md).
-- Secrets are never committed. See [`docs/security/secrets.md`](docs/security/secrets.md).
-
----
-
-## CI Status
-
-| Workflow | Trigger |
-|----------|---------|
-| Backend build & test | Push / PR on `backend/**` |
-| Frontend lint, typecheck & build | Push / PR on `frontend/**` |
-| Dependabot | Weekly (Monday) for NuGet, npm, Actions |
-
----
-
-## Known Limitations
-
-- No automated CD pipeline — deployment is currently manual.
-- No database migration framework — schema changes are applied via SQL scripts.
-- OTP delivery requires a live SMTP server; CI skips OTP-gated flows.
-- Frontend Docker image not yet provided.
+| # | Name | Student ID | GitHub | Key Area |
+| --- | --- | --- | --- | --- |
+| 1 | R.P.L Sathruwan | 39132 | `@lasithasathruwan6-ctrl` | Team lead, architecture, security, JWT/RBAC, audit ledger |
+| 2 | H.B.H Indusara | 39327 | `@hasindu-indusara` | Database design, requests, case management, human-in-the-loop |
+| 3 | Sasmitha Thejan | 39660 | `@bandara331` | AI scoring, governance, duplicates, anomaly detection, resources |
+| 4 | E.W.S.P.D Dewmini | 39160 | `@dimalsha-dewmini` | Notifications, outbox/workers, mapping, routing, report |
+| 5 | E.M.M.P.S Ekanayaka | 39318 | `@Madhusha-Prageeth` | Shelters (concurrency safety), volunteers, UI evidence |
+| 6 | G.R.G Perera | 39055 | `@gimhanarasidu38-create` | Citizen & donor portals, campaigns, API & QA testing |
